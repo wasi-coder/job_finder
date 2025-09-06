@@ -6,6 +6,8 @@ import '../../providers/theme_provider.dart';
 import '../../models/job.dart';
 import 'post_job_screen.dart';
 import 'job_details_screen.dart';
+import 'profile_screen.dart';
+import 'applications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +25,12 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const PostJobScreen()),
+      );
+    } else if (index == 3) {
+      // Navigate to Applications Screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ApplicationsScreen()),
       );
     } else {
       setState(() {
@@ -76,6 +84,10 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Post Job',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.assignment),
+            label: 'Applications',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
           ),
@@ -98,6 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return const Center(child: Text('Tap + to post a job'));
       case 2:
+        return const Center(child: Text('Tap Applications to view your applications'));
+      case 3:
         return const ProfileScreen();
       default:
         return const JobsListScreen();
@@ -191,7 +205,7 @@ class _JobsListScreenState extends State<JobsListScreen> {
         // Jobs List
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('jobs').orderBy('isFeatured', descending: true).orderBy('createdAt', descending: true).snapshots(),
+            stream: FirebaseFirestore.instance.collection('jobs').orderBy('createdAt', descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -233,7 +247,13 @@ class _JobsListScreenState extends State<JobsListScreen> {
 
               final allJobs = snapshot.data!.docs
                   .map((doc) => Job.fromMap(doc.data() as Map<String, dynamic>))
-                  .toList();
+                  .toList()
+                ..sort((a, b) {
+                  // Featured jobs first, then by creation date
+                  if (a.isFeatured && !b.isFeatured) return -1;
+                  if (!a.isFeatured && b.isFeatured) return 1;
+                  return b.createdAt.compareTo(a.createdAt);
+                });
 
               final filteredJobs = allJobs.where((job) {
                 // Apply filters
@@ -510,24 +530,3 @@ class JobCard extends StatelessWidget {
   }
 }
 
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).userModel;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Welcome, ${user?.name ?? 'User'}'),
-          Text('Role: ${user?.role ?? 'Unknown'}'),
-          const SizedBox(height: 20),
-          const Text('Profile Screen - More features coming soon'),
-        ],
-      ),
-    );
-  }
-}

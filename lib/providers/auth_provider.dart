@@ -49,6 +49,8 @@ class AuthProvider with ChangeNotifier {
             role: 'seeker', // default role
             createdAt: DateTime.now(),
           );
+          // Save the user to Firestore
+          await _firestore.collection('users').doc(uid).set(_userModel!.toMap());
         }
       }
     } catch (e) {

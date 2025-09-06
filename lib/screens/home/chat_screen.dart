@@ -78,7 +78,6 @@ class _ChatScreenState extends State<ChatScreen> {
               stream: FirebaseFirestore.instance
                   .collection('messages')
                   .where('conversationId', isEqualTo: conversationId)
-                  .orderBy('timestamp', descending: false)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -91,7 +90,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final messages = snapshot.data!.docs
                     .map((doc) => Message.fromMap(doc.data() as Map<String, dynamic>))
-                    .toList();
+                    .toList()
+                  ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
                 if (messages.isEmpty) {
                   return Center(
